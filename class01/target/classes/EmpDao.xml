@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.laowang.dao.EmpDao">
+    <select id="selectByEmpno" resultType="com.laowang.bean.Emp">
+        select * from Emp where empno = #{empno}
+    </select>
+    <insert id="save" parameterType="com.laowang.bean.Emp">
+        insert emp(empno,ename,deptno,hiredate,job,mgr,sal,comm)
+        value (#{empno},#{ename},null ,#{hiredate},null ,null ,#{sal},null );
+    </insert>
+    <delete id="delete" parameterType="java.lang.Integer">
+        delete from emp where empno = #{empno}
+    </delete>
+    <update id="update" parameterType="com.laowang.bean.Emp">
+        update emp set sal=#{sal} where empno=#{empno}
+    </update>
+</mapper>

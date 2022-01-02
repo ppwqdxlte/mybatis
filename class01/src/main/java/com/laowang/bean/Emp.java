@@ -1,6 +1,8 @@
 package com.laowang.bean;
 
 import java.sql.Date;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.Objects;
 
 public class Emp {
@@ -13,6 +15,45 @@ public class Emp {
     private Double sal;
     private Date hiredate;
     private String comm;
+
+    public Emp buildEmpno(Integer empno){
+        this.empno = empno;
+        return this;
+    }
+    public Emp buildEname(String ename){
+        this.ename = ename;
+        return this;
+    }
+    public Emp buildDeptno(Integer deptno){
+        this.deptno = deptno;
+        return this;
+    }
+    public Emp buildMgr(Integer mgr){
+        this.mgr = mgr;
+        return this;
+    }
+    public Emp buildJob(String job){
+        this.job = job;
+        return this;
+    }
+    public Emp buildSal(Double sal){
+        this.sal = sal;
+        return this;
+    }
+    public Emp buildHiredate(Integer year,Integer month,Integer day){
+        this.parseIntToDate(year,month,day);
+        return this;
+    }
+    private Date parseIntToDate(Integer year,Integer month,Integer day){
+        Calendar calendar = new GregorianCalendar();
+        calendar.set(year,month,day);
+        this.setHiredate(new Date(calendar.getTimeInMillis()));
+        return this.hiredate;
+    }
+    public Emp buildComm(String comm){
+        this.comm = comm;
+        return this;
+    }
 
     @Override
     public String toString() {

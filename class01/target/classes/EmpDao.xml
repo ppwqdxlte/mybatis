@@ -16,4 +16,31 @@
     <update id="update" parameterType="com.laowang.bean.Emp">
         update emp set sal=#{sal} where empno=#{empno}
     </update>
+    <!--批量增加，自增主键（前提是数据库支持才行）
+    ALTER TABLE `mybatis_test`.`emp`
+    CHANGE COLUMN `EMPNO` `EMPNO` INT NOT NULL AUTO_INCREMENT;
+    动态SQL之 【foreach元素】-->
+    <insert id="saveBatch" parameterType="com.laowang.bean.Emp"
+            useGeneratedKeys="true" keyProperty="empno">
+        insert into emp(ename,hiredate,sal) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.ename},#{item.hiredate},#{item.sal})
+        </foreach>
+    </insert>
+    <!--【selectKey元素】用来给属性keyProperty赋值
+    ,若要这个元素生效，数据库那边要取消自增-->
+    <insert id="saveWithRandomID" parameterType="com.laowang.bean.Emp">
+        <selectKey keyProperty="empno" order="BEFORE" resultType="int" statementType="PREPARED">
+            select ceil(rand()*10000) empno from dual
+        </selectKey>
+        insert into emp(empno,ename,hiredate,sal) values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.empno},#{item.ename},#{item.hiredate},#{item.sal})
+        </foreach>
+    </insert>
+    <!--当 SQL 语句中的元数据（如表名或列名）是动态生成的时候，字符串替换将会非常有用。 
+    举个例子，如果你想 select 一个表任意一列的数据时-->
+    <select id="selectByColumn" resultType="com.laowang.bean.Emp">
+        select * from ${table} where ${column} = #{value}
+    </select>
 </mapper>

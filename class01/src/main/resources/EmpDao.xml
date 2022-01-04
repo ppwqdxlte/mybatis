@@ -407,5 +407,6 @@ SELECT * FROM POST WHERE BLOG_ID = #{id}
 所以上面的例子大多都要比实际的更复杂。 这也表明，大多数数据库的复杂度都比较高，我们不太可能一直依赖于这种机制。-->
     <!--【自动映射】https://mybatis.net.cn/sqlmap-xml.html-->
     <!--【缓存】https://mybatis.net.cn/sqlmap-xml.html-->
-
+    <!--【动态SQL】https://mybatis.net.cn/dynamic-sql.html-->
+    <!--其它特性：略-->
 </mapper>

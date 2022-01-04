@@ -61,6 +61,351 @@
         <result property="hiredate" javaType="java.sql.Date" column="hiredate"/>
         <result property="sal" javaType="long" column="sal"/>
     </resultMap>
-    
-    
+   <!-- 非常复杂的语句 -->
+    <!--<select id="selectBlogDetails" resultMap="detailedBlogResultMap">
+        select
+            B.id as blog_id,
+            B.title as blog_title,
+            B.author_id as blog_author_id,
+            A.id as author_id,
+            A.username as author_username,
+            A.password as author_password,
+            A.email as author_email,
+            A.bio as author_bio,
+            A.favourite_section as author_favourite_section,
+            P.id as post_id,
+            P.blog_id as post_blog_id,
+            P.author_id as post_author_id,
+            P.created_on as post_created_on,
+            P.section as post_section,
+            P.subject as post_subject,
+            P.draft as draft,
+            P.body as post_body,
+            C.id as comment_id,
+            C.post_id as comment_post_id,
+            C.name as comment_name,
+            C.comment as comment_text,
+            T.id as tag_id,
+            T.name as tag_name
+        from Blog B
+                 left outer join Author A on B.author_id = A.id
+                 left outer join Post P on B.id = P.blog_id
+                 left outer join Comment C on P.id = C.post_id
+                 left outer join Post_Tag PT on PT.post_id = P.id
+                 left outer join Tag T on PT.tag_id = T.id
+        where B.id = #{id}
+    </select>
+    非常复杂的结果映射
+    【注意】最佳实践 最好逐步建立结果映射，
+    如果你尝试一次性创建像上面示例那么巨大的结果映射，
+    不仅容易出错，难度也会直线上升。
+    所以，从最简单的形态开始，逐步迭代。
+    有时候，框架的行为像是一个黑盒子（无论是否开源）。
+    因此，为了确保实现的行为与你的期望相一致，最好编写单元测试。
+    并且单元测试在提交 bug 时也能起到很大的作用。
+    <resultMap id="detailedBlogResultMap" type="Blog">
+        <constructor>
+            <idArg column="blog_id" javaType="int"/>
+        </constructor>
+        <result property="title" column="blog_title"/>
+        <association property="author" javaType="Author">
+            <id property="id" column="author_id"/>
+            <result property="username" column="author_username"/>
+            <result property="password" column="author_password"/>
+            <result property="email" column="author_email"/>
+            <result property="bio" column="author_bio"/>
+            <result property="favouriteSection" column="author_favourite_section"/>
+        </association>
+        <collection property="posts" ofType="Post">
+            <id property="id" column="post_id"/>
+            <result property="subject" column="post_subject"/>
+            <association property="author" javaType="Author"/>
+            <collection property="comments" ofType="Comment">
+                <id property="id" column="comment_id"/>
+            </collection>
+            <collection property="tags" ofType="Tag" >
+                <id property="id" column="tag_id"/>
+            </collection>
+            <discriminator javaType="int" column="draft">
+                <case value="1" resultType="DraftPost"/>
+            </discriminator>
+        </collection>
+    </resultMap>
+    -->
+    <!--【关联的嵌套 Select 查询】===造成（N+1）的问题：
+    示例：
+    <resultMap id="blogResult" type="Blog">
+      <association property="author" column="author_id" javaType="Author" select="selectAuthor"/>
+    </resultMap>
+
+    <select id="selectBlog" resultMap="blogResult">
+      SELECT * FROM BLOG WHERE ID = #{id}
+    </select>
+
+    <select id="selectAuthor" resultType="Author">
+      SELECT * FROM AUTHOR WHERE ID = #{id}
+    </select>
+就是这么简单。我们有两个 select 查询语句：一个用来加载博客（Blog），另外一个用来加载作者（Author），
+而且博客的结果映射描述了应该使用 selectAuthor 语句加载它的 author 属性。
+   这种方式虽然很简单，但在大型数据集或大型数据表上表现不佳。
+   这个问题被称为【“N+1 查询问题”】：
+   1、你执行了一个单独的 SQL 语句来获取结果的一个列表（就是“+1”）。
+   2、对列表返回的每条记录，你执行一个 select 查询语句来为每条记录加载详细信息（就是“N”）。
+这个问题会导致成百上千的 SQL 语句被执行，MyBatis 能够对这样的查询进行延迟加载，
+因此可以将大量语句同时运行的开销分散开来。
+然而，如果你加载记录列表之后立刻就遍历列表以获取嵌套的数据，
+就会触发所有的延迟加载查询，性能可能会变得很糟糕。
+所以还有另外一种方法：
+    -->
+    <!--【关联的嵌套结果映射】===【join方法】是第一种解决N+1查询问题的方法：
+现在我们将博客表和作者表连接在一起，而不是执行一个独立的查询语句，就像这样：
+    <select id="selectBlog" resultMap="blogResult">
+  select
+    B.id            as blog_id,
+    B.title         as blog_title,
+    B.author_id     as blog_author_id,
+    A.id            as author_id,
+    A.username      as author_username,
+    A.password      as author_password,
+    A.email         as author_email,
+    A.bio           as author_bio
+  from Blog B left outer join Author A on B.author_id = A.id
+  where B.id = #{id}
+</select>
+  结果集：
+<resultMap id="blogResult" type="Blog">
+  <id property="id" column="blog_id" />
+  <result property="title" column="blog_title"/>
+  <association property="author" column="blog_author_id" javaType="Author" resultMap="authorResult"/>
+</resultMap>
+
+<resultMap id="authorResult" type="Author">
+  <id property="id" column="author_id"/>
+  <result property="username" column="author_username"/>
+  <result property="password" column="author_password"/>
+  <result property="email" column="author_email"/>
+  <result property="bio" column="author_bio"/>
+</resultMap>
+ 上述2个结果集等效为：但是这样的话，authorResult结果集就无法重用了
+ <resultMap id="blogResult" type="Blog">
+  <id property="id" column="blog_id" />
+  <result property="title" column="blog_title"/>
+  <association property="author" javaType="Author">
+    <id property="id" column="author_id"/>
+    <result property="username" column="author_username"/>
+    <result property="password" column="author_password"/>
+    <result property="email" column="author_email"/>
+    <result property="bio" column="author_bio"/>
+  </association>
+</resultMap>
+-->
+    <!--
+那如果博客（blog）有一个共同作者（co-author）该怎么办？select 语句看起来会是这样的：
+
+<select id="selectBlog" resultMap="blogResult">
+  select
+    B.id            as blog_id,
+    B.title         as blog_title,
+    A.id            as author_id,
+    A.username      as author_username,
+    A.password      as author_password,
+    A.email         as author_email,
+    A.bio           as author_bio,
+    CA.id           as co_author_id,
+    CA.username     as co_author_username,
+    CA.password     as co_author_password,
+    CA.email        as co_author_email,
+    CA.bio          as co_author_bio
+  from Blog B
+  left outer join Author A on B.author_id = A.id
+  left outer join Author CA on B.co_author_id = CA.id
+  where B.id = #{id}
+</select>
+由于结果中的列名与结果映射中的列名不同，
+你需要指定 【columnPrefix】 以便重复使用该结果映射来映射 co-author 的结果。
+
+<resultMap id="blogResult" type="Blog">
+  <id property="id" column="blog_id" />
+  <result property="title" column="blog_title"/>
+  <association property="author"
+    resultMap="authorResult" />
+  <association property="coAuthor"
+    resultMap="authorResult"
+    columnPrefix="co_" />
+</resultMap>
+    -->
+    <!--【关联的多结果集（ResultSet）】===从版本 3.2.3 开始，
+    MyBatis 提供的【另一种解决 N+1 查询问题】的方法：
+某些数据库允许存储过程返回多个结果集，或一次性执行多个语句，每个语句返回一个结果集。
+我们可以利用这个特性，在不使用连接的情况下，只访问数据库一次就能获得相关数据：
+在例子中，存储过程执行下面的查询并返回两个结果集。第一个结果集会返回博客（Blog）的结果，第二个则返回作者（Author）的结果。
+SELECT * FROM BLOG WHERE ID = #{id}
+SELECT * FROM AUTHOR WHERE ID = #{id}
+在映射语句中，必须通过 resultSets 属性为每个结果集指定一个名字，多个名字使用逗号隔开。
+<select id="selectBlog" resultSets="blogs,authors" resultMap="blogResult" statementType="CALLABLE">
+  {call getBlogsAndAuthors(#{id,jdbcType=INTEGER,mode=IN})}
+</select>
+现在我们可以指定使用 “authors” 结果集的数据来填充 “author” 关联：
+<resultMap id="blogResult" type="Blog">
+  <id property="id" column="id" />
+  <result property="title" column="title"/>
+  <association property="author" javaType="Author" resultSet="authors" column="author_id" foreignColumn="id">
+    <id property="id" column="id"/>
+    <result property="username" column="username"/>
+    <result property="password" column="password"/>
+    <result property="email" column="email"/>
+    <result property="bio" column="bio"/>
+  </association>
+</resultMap>
+    -->
+    <!--【association】表示“有一个”类型的关联，
+        【collection】表示”有很多个“类型的关联
+<collection property="posts" ofType="domain.blog.Post">
+  <id property="id" column="post_id"/>
+  <result property="subject" column="post_subject"/>
+  <result property="body" column="post_body"/>
+</collection>
+一个博客（Blog）只有一个作者（Author)。但一个博客有很多文章（Post)。
+在博客类中，这可以用下面的写法来表示：
+private List<Post> posts;
+-->
+    <!--
+    【集合的嵌套 Select 查询】：
+首先，让我们看看如何使用嵌套 Select 查询来为博客加载文章。
+<resultMap id="blogResult" type="Blog">
+  <collection property="posts" javaType="ArrayList" column="id" ofType="Post" select="selectPostsForBlog"/>
+读作： “posts 是一个存储 Post 的 ArrayList 集合”
+</resultMap>
+<select id="selectBlog" resultMap="blogResult">
+  SELECT * FROM BLOG WHERE ID = #{id}
+</select>
+<select id="selectPostsForBlog" resultType="Post">
+  SELECT * FROM POST WHERE BLOG_ID = #{id}
+</select>-->
+    <!--【集合的嵌套结果映射】：
+现在你可能已经猜到了集合的嵌套结果映射是怎样工作的，
+除了新增的 “ofType” 属性，它和关联的完全相同。
+<select id="selectBlog" resultMap="blogResult">
+  select
+  B.id as blog_id,
+  B.title as blog_title,
+  B.author_id as blog_author_id,
+  P.id as post_id,
+  P.subject as post_subject,
+  P.body as post_body,
+  from Blog B
+  left outer join Post P on B.id = P.blog_id
+  where B.id = #{id}
+</select>
+结果集：
+<resultMap id="blogResult" type="Blog">
+  <id property="id" column="blog_id" />
+  <result property="title" column="blog_title"/>
+  <collection property="posts" ofType="Post">
+    <id property="id" column="post_id"/>
+    <result property="subject" column="post_subject"/>
+    <result property="body" column="post_body"/>
+  </collection>
+</resultMap>
+如果你喜欢更详略的、可重用的结果映射，你可以使用下面的等价形式：
+<resultMap id="blogResult" type="Blog">
+  <id property="id" column="blog_id" />
+  <result property="title" column="blog_title"/>
+  <collection property="posts" ofType="Post" resultMap="blogPostResult" columnPrefix="post_"/>
+</resultMap>
+<resultMap id="blogPostResult" type="Post">
+  <id property="id" column="id"/>
+  <result property="subject" column="subject"/>
+  <result property="body" column="body"/>
+</resultMap>
+-->
+    <!--【集合的多结果集（ResultSet）】：
+像关联元素那样，我们可以通过执行存储过程实现，它会执行两个查询并返回两个结果集，
+一个是博客的结果集，另一个是文章的结果集：
+SELECT * FROM BLOG WHERE ID = #{id}
+SELECT * FROM POST WHERE BLOG_ID = #{id}
+在映射语句中，必须通过 resultSets 属性为每个结果集指定一个名字，多个名字使用逗号隔开。
+<select id="selectBlog" resultSets="blogs,posts" resultMap="blogResult">
+  {call getBlogsAndPosts(#{id,jdbcType=INTEGER,mode=IN})}
+</select>
+我们指定 “posts” 集合将会使用存储在 “posts” 结果集中的数据进行填充：
+<resultMap id="blogResult" type="Blog">
+  <id property="id" column="id" />
+  <result property="title" column="title"/>
+  <collection property="posts" ofType="Post" resultSet="posts" column="id" foreignColumn="blog_id">
+    <id property="id" column="id"/>
+    <result property="subject" column="subject"/>
+    <result property="body" column="body"/>
+  </collection>
+</resultMap>
+    -->
+    <!--小结：【注意】 对关联或集合的映射，并没有深度、广度或组合上的要求，
+但在映射时要留意性能问题，在探索最佳实践的过程中，应用的单元测试和性能测试会是你的好帮手。
+而 MyBatis 的好处在于，可以在不对你的代码引入重大变更（如果有）的情况下，允许你之后改变你的想法。
+【高级关联】和【集合映射】是一个深度话题。文档的介绍只能到此为止。配合少许的实践，你会很快了解全部的用法。
+-->
+    <!--【鉴别器（discriminator）】：
+<discriminator javaType="int" column="draft">
+  <case value="1" resultType="DraftPost"/>
+</discriminator>
+有时候，一个数据库查询可能会返回多个不同的结果集（但总体上还是有一定的联系的）。
+鉴别器（discriminator）元素就是被设计来应对这种情况的，另外也能处理其它情况，例如类的继承层次结构。
+鉴别器的概念很好理解——它很像 Java 语言中的 switch 语句。
+一个鉴别器的定义需要指定 column 和 javaType 属性。column 指定了 MyBatis 查询被比较值的地方。
+而 javaType 用来确保使用正确的相等测试（虽然很多情况下字符串的相等测试都可以工作）。例如：
+<resultMap id="vehicleResult" type="Vehicle">
+  <id property="id" column="id" />
+  <result property="vin" column="vin"/>
+  <result property="year" column="year"/>
+  <result property="make" column="make"/>
+  <result property="model" column="model"/>
+  <result property="color" column="color"/>
+  <discriminator javaType="int" column="vehicle_type">
+    <case value="1" resultMap="carResult"/>
+    <case value="2" resultMap="truckResult"/>
+    <case value="3" resultMap="vanResult"/>
+    <case value="4" resultMap="suvResult"/>
+  </discriminator>
+</resultMap>
+在这个示例中，MyBatis 会从结果集中得到每条记录，然后比较它的 vehicle type 值。
+如果它匹配任意一个鉴别器的 case，就会使用这个 case 指定的结果映射。 这个过程是互斥的，也就是说，剩余的结果映射将被忽略（除非它是扩展的，我们将在稍后讨论它）。
+如果不能匹配任何一个 case，MyBatis 就只会使用鉴别器块外定义的结果映射。 所以，如果 carResult 的声明如下：
+<resultMap id="carResult" type="Car">
+  <result property="doorCount" column="door_count" />
+</resultMap>
+那么只有 doorCount 属性会被加载。这是为了即使鉴别器的 case 之间都能分为完全独立的一组，尽管和父结果映射可能没有什么关系。
+在上面的例子中，我们当然知道 cars 和 vehicles 之间有关系，也就是 【Car 是一个 Vehicle】。因此，我们希望剩余的属性也能被加载。而这只需要一个小修改。
+<resultMap id="carResult" type="Car" extends="vehicleResult">
+  <result property="doorCount" column="door_count" />
+</resultMap>
+现在 vehicleResult 和 carResult 的属性都会被加载了。
+可能有人又会觉得映射的外部定义有点太冗长了。 因此，对于那些更喜欢简洁的映射风格的人来说，还有另一种语法可以选择。例如：
+<resultMap id="vehicleResult" type="Vehicle">
+  <id property="id" column="id" />
+  <result property="vin" column="vin"/>
+  <result property="year" column="year"/>
+  <result property="make" column="make"/>
+  <result property="model" column="model"/>
+  <result property="color" column="color"/>
+  <discriminator javaType="int" column="vehicle_type">
+    <case value="1" resultType="carResult">
+      <result property="doorCount" column="door_count" />
+    </case>
+    <case value="2" resultType="truckResult">
+      <result property="boxSize" column="box_size" />
+      <result property="extendedCab" column="extended_cab" />
+    </case>
+    <case value="3" resultType="vanResult">
+      <result property="powerSlidingDoor" column="power_sliding_door" />
+    </case>
+    <case value="4" resultType="suvResult">
+      <result property="allWheelDrive" column="all_wheel_drive" />
+    </case>
+  </discriminator>
+</resultMap>
+【提示】 请注意，这些都是结果映射，如果你完全不设置任何的 result 元素，MyBatis 将为你自动匹配列和属性。
+所以上面的例子大多都要比实际的更复杂。 这也表明，大多数数据库的复杂度都比较高，我们不太可能一直依赖于这种机制。-->
+    <!--【自动映射】https://mybatis.net.cn/sqlmap-xml.html-->
+    <!--【缓存】https://mybatis.net.cn/sqlmap-xml.html-->
+
 </mapper>

@@ -4,6 +4,10 @@
         "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
     <properties resource="db.properties"/>
+    <settings>
+        <!--开启自动映射之：数据库下划线分隔的列名，自动映射到对应POJO驼峰命名法的属性名-->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+    </settings>
     <typeAliases>
         <typeAlias type="com.laowang.bean.Emp" alias="Emp"/>
     </typeAliases>

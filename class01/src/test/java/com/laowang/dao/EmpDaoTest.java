@@ -1,9 +1,13 @@
+package com.laowang.dao;
+
 import com.laowang.bean.Emp;
-import com.laowang.dao.EmpDao;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.junit.jupiter.api.*;
 
 import java.io.FileNotFoundException;
@@ -123,5 +127,15 @@ public class EmpDaoTest {
         System.out.println("afterSession().........");
         session.commit();
         session.close();
+    }
+
+    private Logger logger = LoggerContext.getContext().getLogger(EmpDaoTest.class);
+    /*
+    * 奇了怪了，log4j不好使，啥都打印不出来
+    * */
+    @Test
+    public void testLogger(){
+        logger.log(Level.INFO,"我就是试一试能不能打印出来。。");
+        System.out.println(2342);
     }
 }

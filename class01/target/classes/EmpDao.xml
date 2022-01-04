@@ -3,24 +3,24 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.laowang.dao.EmpDao">
-    <select id="selectByEmpno" resultType="com.laowang.bean.Emp">
+    <select id="selectByEmpno" resultType="Emp">
         select * from Emp where empno = #{empno}
     </select>
-    <insert id="save" parameterType="com.laowang.bean.Emp">
+    <insert id="save" parameterType="Emp">
         insert emp(empno,ename,deptno,hiredate,job,mgr,sal,comm)
         value (#{empno},#{ename},null ,#{hiredate},null ,null ,#{sal},null );
     </insert>
-    <delete id="delete" parameterType="java.lang.Integer">
+    <delete id="delete" parameterType="int">
         delete from emp where empno = #{empno}
     </delete>
-    <update id="update" parameterType="com.laowang.bean.Emp">
+    <update id="update" parameterType="Emp">
         update emp set sal=#{sal} where empno=#{empno}
     </update>
     <!--批量增加，自增主键（前提是数据库支持才行）
     ALTER TABLE `mybatis_test`.`emp`
     CHANGE COLUMN `EMPNO` `EMPNO` INT NOT NULL AUTO_INCREMENT;
     动态SQL之 【foreach元素】-->
-    <insert id="saveBatch" parameterType="com.laowang.bean.Emp"
+    <insert id="saveBatch" parameterType="Emp"
             useGeneratedKeys="true" keyProperty="empno">
         insert into emp(ename,hiredate,sal) values
         <foreach collection="list" item="item" separator=",">
@@ -29,7 +29,7 @@
     </insert>
     <!--【selectKey元素】用来给属性keyProperty赋值
     ,若要这个元素生效，数据库那边要取消自增-->
-    <insert id="saveWithRandomID" parameterType="com.laowang.bean.Emp">
+    <insert id="saveWithRandomID" parameterType="Emp">
         <selectKey keyProperty="empno" order="BEFORE" resultType="int" statementType="PREPARED">
             select ceil(rand()*10000) empno from dual
         </selectKey>
@@ -40,7 +40,7 @@
     </insert>
     <!--当 SQL 语句中的元数据（如表名或列名）是动态生成的时候，字符串替换将会非常有用。 
     举个例子，如果你想 select 一个表任意一列的数据时-->
-    <select id="selectByColumn" resultType="com.laowang.bean.Emp">
+    <select id="selectByColumn" resultType="Emp">
         select * from ${table} where ${column} = #{value}
     </select>
 </mapper>

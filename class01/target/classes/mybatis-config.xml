@@ -11,6 +11,8 @@
         <!--<setting name="logImpl" value="STDOUT_LOGGING"/>-->
         <!--log4j的日志实现，必须给上这一条，否则毫无反应且打印不出日志-->
         <setting name="logImpl" value="LOG4J"/>
+        <!--开启缓存，默认值true-->
+        <setting name="cacheEnabled" value="true"/>
     </settings>
     <typeAliases>
         <typeAlias type="com.laowang.bean.Emp" alias="Emp"/>

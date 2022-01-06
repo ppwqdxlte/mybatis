@@ -3,6 +3,17 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.laowang.dao.EmpDao">
+    <!--配置Ehcache缓存，也可配置具体实现类，比如EhBlockingCache，但是资源路径须得有ehcache.xml，如果没这个配置文件，自动用默认的-->
+    <cache type="org.mybatis.caches.ehcache.EhcacheCache"/>
+    <!--也可以详细配置-->
+    <!--<cache type="org.mybatis.caches.ehcache.EhcacheCache">
+        <property name="timeToIdleSeconds" value="3600"/>&lt;!&ndash;1 hour&ndash;&gt;
+        <property name="timeToLiveSeconds" value="3600"/>&lt;!&ndash;1 hour&ndash;&gt;
+        <property name="maxEntriesLocalHeap" value="1000"/>
+        <property name="maxEntriesLocalDisk" value="10000000"/>
+        <property name="memoryStoreEvictionPolicy" value="LRU"/>
+    </cache>-->
+
     <select id="selectByEmpno" resultType="Emp">
         select * from Emp where empno = #{empno}
     </select>

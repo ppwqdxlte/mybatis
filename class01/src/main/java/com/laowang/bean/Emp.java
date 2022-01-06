@@ -1,11 +1,12 @@
 package com.laowang.bean;
 
+import java.io.Serializable;
 import java.sql.Date;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Objects;
 
-public class Emp {
+public class Emp implements Serializable {
 
     private Integer empno;
     private String ename;

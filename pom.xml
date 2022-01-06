@@ -37,19 +37,36 @@
             <version>5.8.2</version>
             <scope>test</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+
         <!--由于slf4j只是一套日志框架的抽象接口，不提供实现，
-        具体的实现，用户可以自由选择任何一个日志框架，比如 Log4j, Logback 等等
+        具体的实现，用户可以自由选择任何一个日志框架，比如 Log4j, Logback 等等，这里使用log4j最新版，从log4j官网得知需要添加如下依赖：
+            1.api接口
+            2.接口实现
+            3.dependenceManagement【存疑】：单元测试不需要依赖管理，不知道正式生产环境部署的时候是否需要配置这条。
+        此外还需要在mybatis-config.xml中添加<setting name="logImpl" value="LOG4J"/>-->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.32</version>
-        </dependency>-->
-        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.17.1</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>2.17.1</version>
+        </dependency>
+        <!-- 必须添加slf4j对log4j的绑定桥才能正常输出 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.32</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!--除了mybatis自己的一级缓存，二级缓存，还可以添加第三方缓存插件，从mybatis的github仓库可以找到很多插件-->
+        <dependency>
+            <groupId>org.mybatis.caches</groupId>
+            <artifactId>mybatis-ehcache</artifactId>
+            <version>1.2.1</version>
         </dependency>
     </dependencies>
 
